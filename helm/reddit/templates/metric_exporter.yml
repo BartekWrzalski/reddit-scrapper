@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "reddit.fullname" . }}-metrics-exporter
+  labels:
+    app: metrics
+    {{- include "reddit.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metrics
+      {{- include "reddit.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: metrics
+        {{- include "reddit.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: metrics-exporter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["python", "-m", "reddit_scrapper.metric_exporter"]
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: {{ include "reddit.name" . }}-env
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          volumeMounts:
+            - name: prometheus-data
+              mountPath: /tmp/metrics
+      volumes:
+        - name: prometheus-data
+          hostPath:
+            path: {{ .Values.global.dataPath }}/prometheus
+            type: DirectoryOrCreate
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "reddit.fullname" . }}-metrics-exporter
+  labels:
+    app: metrics
+    {{- include "reddit.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: metrics
+    {{- include "reddit.selectorLabels" . | nindent 4 }}
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+      name: metrics
+
+---
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "reddit.fullname" . }}-metrics-exporter-sm
+  labels:
+    release: {{ .Release.Name }}
+    {{- include "reddit.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: metrics
+      {{- include "reddit.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s

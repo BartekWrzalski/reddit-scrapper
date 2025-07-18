@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mini-project"
+version = "0.1.0"
+description = ""
+authors = ["Bartłomiej Wrzalski"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+grpcio = "^1.43.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+grpcio-tools = "^1.43.0"
+poethepoet = "0.12.0"
+
+[tool.poe.tasks]
+grpc="python -m grpc_tools.protoc -I. --python_out=service --grpc_python_out=service protobuf/project.proto"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,18 @@
+dependencies:
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 21.2.3
+- name: mongodb
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.5.20
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 27.20.0
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 74.0.0
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 9.2.2
+digest: sha256:3da0e86c2f9862f7aba44900ba2b3527ec5611bffafb82e6fc33863d7ff460a5
+generated: "2025-06-13T19:40:29.178329843+02:00"

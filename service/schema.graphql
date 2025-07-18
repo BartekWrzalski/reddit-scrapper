@@ -1,0 +1,7 @@
+type Query {
+  predictPopularity(text: String!): Prediction!
+}
+
+type Prediction {
+  score: Int!
+}

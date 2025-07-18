@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis
+
+  db:
+    image: mongo
+    container_name: mongo
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=reddit
+    ports:
+      - "27017:27017"
+    volumes:
+      - db_data:/data/db
+    networks:
+      default:
+      redash_default:
+        aliases:
+          - mongo
+
+  metrics:
+    build: .
+    command: python -m reddit_scrapper.metric_exporter
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    volumes:
+      - metrics_db:/tmp/metrics
+
+  celery_worker:
+    build: .
+    command: celery -A reddit_scrapper.celery_app worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    volumes:
+      - ./models:/app/models
+      - metrics_db:/tmp/metrics
+    ports:
+      - "8001:8001"
+
+  celery_beat:
+    build: .
+    command: celery -A reddit_scrapper.celery_app beat --loglevel=info
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+    volumes:
+      - ./models:/app/models
+      - metrics_db:/tmp/metrics
+    ports:
+      - "8002:8001"
+
+  prometheus:
+    image: prom/prometheus
+    environment:
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/metrics
+    volumes:
+      - ./reddit_scrapper/prometheus.yml:/etc/prometheus/prometheus.yml
+      - metrics_db:/tmp/metrics
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  db_data:
+  grafana_data:
+  metrics_db:
+
+networks:
+  redash_default:
+    external: true

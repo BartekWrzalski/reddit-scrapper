@@ -1,0 +1,89 @@
+replicaCount: 1
+
+image:
+  repository: bwrzalski/pdm
+  tag: 2.0.5
+
+global:
+  hostPath: /home/bartek/SZT/Sem3/bigdata/mini-project-BartekWrzalski
+  dataPath: /home/bartek/SZT/Sem3/bigdata/mini-project-BartekWrzalski/data
+
+imagePullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+redis:
+  auth:
+    enabled: false
+  replica:
+    replicaCount: 1
+  fullnameOverride: redis
+
+celeryBeat:
+  replicaCount: 1
+
+celeryWorker:
+  replicaCount: 1
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    serviceMonitorSelectorNilUsesHelmValues: false
+    scrapeInterval: "15s"
+
+grafana:
+  adminUser: admin
+  adminPassword: admin
+
+  persistance:
+    enabled: true
+  
+  image:
+    repository: grafana/grafana
+    tag: 9.3.6
+    pullPolicy: IfNotPresent
+  
+  sidecar:
+    dashboards:
+      enabled: true
+      image:
+        repository: quay.io/kiwigrid/k8s-sidecar
+        tag: 1.22.0
+    datasources:
+      enabled: true
+      image:
+        repository: quay.io/kiwigrid/k8s-sidecar
+        tag: 1.22.0
+
+mongodb:
+  auth:
+    username: admin
+    password: admin
+    database: reddit
+  
+grpc:
+  fullnameOverride: server
+
+graphql:
+  fullnameOverride: graphql
+
+frontend:
+  image: bwrzalski/pdm-frontend
+  version: latest
+  imagePullPolicy: Always

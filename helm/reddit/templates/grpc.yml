@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.grpc.fullnameOverride }}"
+  labels:
+    component: grpc
+    {{- include "reddit.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: grpc
+      {{- include "reddit.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        component: grpc
+        {{- include "reddit.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: grpc
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: [ "python", "-m", "service.server" ]
+          ports:
+            - containerPort: 50051
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Values.grpc.fullnameOverride }}"
+  labels:
+    component: grpc
+    {{- include "reddit.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 50051
+      targetPort: 50051
+      protocol: TCP
+      name: grpc
+  selector:
+    component: grpc
+    {{- include "reddit.selectorLabels" . | nindent 4 }}

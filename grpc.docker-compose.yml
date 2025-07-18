@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: grpc.Dockerfile
+    ports:
+      - "50051:50051"
+    container_name: server
+    
+  client:
+    build:
+      context: .
+      dockerfile: grpc.Dockerfile
+    depends_on:
+      - server
+    command: ["python", "client.py"]
+  
+  gaphql:
+    build:
+      context: .
+      dockerfile: graphql.Dockerfile
+    ports:
+      - "8000:8000"
+    container_name: graphql
+    depends_on:
+      - server

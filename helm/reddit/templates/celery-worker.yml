@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "reddit.fullname" . }}-worker
+  labels:
+    component: worker
+    {{- include "reddit.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.celeryWorker.replicaCount }}
+  selector:
+    matchLabels:
+      component: worker
+      {{- include "reddit.selectorLabels" . | nindent 6 }}
+  strategy: {{- toYaml .Values.deploymentStrategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        component: worker
+        {{- include "reddit.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["celery", "-A", "reddit_scrapper.celery_app", "worker", "--loglevel=info"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "reddit.name" . }}-env
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "ps aux | grep worker | grep -v grep"
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            failureThreshold: 3
+          volumeMounts:
+            - name: prometheus-data
+              mountPath: /tmp/metrics
+      volumes:
+        - name: prometheus-data
+          hostPath:
+            path: {{ .Values.global.dataPath }}/prometheus
+            type: DirectoryOrCreate
